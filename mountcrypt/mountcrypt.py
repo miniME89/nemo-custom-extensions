@@ -3,6 +3,7 @@ import sys
 import pygtk
 import gtk
 import errno
+import uuid
 from subprocess import Popen, PIPE, STDOUT
 
 errorCode = -1
@@ -45,6 +46,15 @@ def dialogError(errorMsg='', errorCode=-1):
     message.set_markup(errorMsg)
     message.run()
     sys.exit(errorCode)
+
+def luksUuid(filepath):
+    cryptsetup = Popen(['cryptsetup', 'luksUuid', filepath], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    stdout,stderr = cryptsetup.communicate()
+
+    if (stderr):
+        return str(uuid.uuid4())
+    else:
+        return str(stdout)
 
 def luksIsOpened(alias):
     return os.path.isfile('/dev/mapper/' + alias)
@@ -111,7 +121,7 @@ if (len(sys.argv) != 2):
     sys.exit(1)
 
 filepath = sys.argv[1]
-alias = os.path.splitext(os.path.basename(filepath))[0]
+alias = luksUuid(filepath)
 
 #open password dialog
 password = dialogPassword(text='Please enter the password for your LUKS encrypted container:')
